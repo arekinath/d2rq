@@ -80,7 +80,7 @@ public class QueryIterTableSQL extends QueryIter {
 			Collection<BindingMaker> bindingMakers, ExecutionContext execCxt) {
 		super(execCxt);
 		this.bindingMakers = bindingMakers;
-		SelectStatementBuilder builder = new SelectStatementBuilder(relation);
+		SelectStatementBuilder builder = new SelectStatementBuilder(execCxt, relation);
 		wrapped = new SQLIterator(
 				builder.getSQLStatement(), builder.getColumnSpecs(), relation.database());
 	}

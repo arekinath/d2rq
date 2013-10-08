@@ -69,6 +69,14 @@ public class Conjunction extends Expression {
 		return Conjunction.create(renamedExpressions);
 	}
 
+	public Expression trimAccess(String apiKey, AliasMap aliases) {
+		Set<Expression> trimmedExpressions = new HashSet<Expression>();
+		for (Expression expression: expressions) {
+			trimmedExpressions.add(expression.trimAccess(apiKey, aliases));
+		}
+		return Conjunction.create(trimmedExpressions);
+	}
+
 	public String toSQL(ConnectedDB database, AliasMap aliases) {
 		List<String> fragments = new ArrayList<String>(this.expressions.size());
 		for (Expression expression: expressions) {

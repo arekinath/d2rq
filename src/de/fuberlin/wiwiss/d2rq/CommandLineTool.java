@@ -45,11 +45,16 @@ public abstract class CommandLineTool {
 	private final ArgDecl skipSchemasArg = new ArgDecl(true, "skip-schema", "skip-schemas");
 	private final ArgDecl skipTablesArg = new ArgDecl(true, "skip-table", "skip-tables");
 	private final ArgDecl skipColumnsArg = new ArgDecl(true, "skip-column", "skip-columns");
+	private final ArgDecl aclSourceArg = new ArgDecl(true, "a", "acl", "aclfile");
 	private final SystemLoader loader = new SystemLoader();
 	private boolean supportImplicitJdbcURL = true;
 	private int minArguments = 0;
 	private int maxArguments = 1;
 	
+	public CommandLineTool() throws Exception {
+		super();
+	}
+
 	public abstract void usage();
 
 	public abstract void initArgs(CommandLine cmd);
@@ -80,6 +85,7 @@ public abstract class CommandLineTool {
 		cmd.add(skipSchemasArg);
 		cmd.add(skipTablesArg);
 		cmd.add(skipColumnsArg);
+		cmd.add(aclSourceArg);
 		
 		initArgs(cmd);
 		
@@ -122,6 +128,9 @@ public abstract class CommandLineTool {
 		}
 		if (cmd.contains(w3cArg)) {
 			loader.setGenerateW3CDirectMapping(true);
+		}
+		if (cmd.contains(aclSourceArg)) {
+			loader.setAclFile(cmd.getArg(aclSourceArg).getValue());
 		}
 		try {
 			Collection<Filter> includes = new ArrayList<Filter>();
@@ -208,6 +217,7 @@ public abstract class CommandLineTool {
 		System.err.println("    --w3c           Produce W3C Direct Mapping compatible mapping file");
 		System.err.println("    --[skip-](schemas|tables|columns) [schema.]table[.column]");
 		System.err.println("                    Include or exclude specific database objects");
+		System.err.println("    -a aclFile      Filename of a D2RQ mapping ACLs file");
 	}
 	
 	private static String withIndirection(String value) {

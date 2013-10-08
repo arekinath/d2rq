@@ -40,6 +40,10 @@ public class Negation extends Expression {
 		return new Negation(base.renameAttributes(columnRenamer));
 	}
 
+	public Expression trimAccess(String apiKey, AliasMap aliases) {
+		return new Negation(base.trimAccess(apiKey, aliases));
+	}
+
 	public String toSQL(ConnectedDB database, AliasMap aliases) {
 		return "NOT (" + base.toSQL(database, aliases) + ")";
 	}

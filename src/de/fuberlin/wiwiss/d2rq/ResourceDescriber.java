@@ -8,6 +8,8 @@ import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.mem.GraphMem;
+import com.hp.hpl.jena.sparql.util.Symbol;
+import com.hp.hpl.jena.sparql.util.Context;
 import com.hp.hpl.jena.sparql.engine.ExecutionContext;
 import com.hp.hpl.jena.sparql.engine.iterator.QueryIterConcat;
 
@@ -23,7 +25,7 @@ public class ResourceDescriber {
 	private final int limit;
 	private final long timeout;
 	private final Graph result = new GraphMem();
-	private final ExecutionContext context;
+	private ExecutionContext context;
 	private boolean executed = false;
 	
 	public ResourceDescriber(Mapping mapping, Node resource) {
@@ -39,9 +41,22 @@ public class ResourceDescriber {
 		this.context = null;
 	}
 	
+	public void setApiKey(String apiKey) {
+		Context ctx = new Context();
+		ctx.set(Symbol.create("apikey"), apiKey);
+		context = new ExecutionContext(ctx, null, null, null);
+	}
+
 	public Graph description() {
 		if (executed) return result;
 		executed = true;
+
+		result.getBulkUpdateHandler().add(mapping.getVocabularyModel().getGraph().find(Triple.create(node, Node.ANY, Node.ANY)));
+
+		if (!onlyOutgoing) {
+			result.getBulkUpdateHandler().add(mapping.getVocabularyModel().getGraph().find(Triple.create(Node.ANY, Node.ANY, node)));
+			result.getBulkUpdateHandler().add(mapping.getVocabularyModel().getGraph().find(Triple.create(Node.ANY, node, Node.ANY)));
+		}
 
 		final QueryIterConcat qIter = new QueryIterConcat(context);
 		Pingback<?> pingback = null;

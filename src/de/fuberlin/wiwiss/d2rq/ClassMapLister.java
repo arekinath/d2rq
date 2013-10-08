@@ -16,6 +16,9 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.sparql.util.Symbol;
+import com.hp.hpl.jena.sparql.util.Context;
+import com.hp.hpl.jena.sparql.engine.ExecutionContext;
 import com.hp.hpl.jena.sparql.vocabulary.FOAF;
 import com.hp.hpl.jena.vocabulary.DC;
 import com.hp.hpl.jena.vocabulary.DCTerms;
@@ -46,9 +49,22 @@ public class ClassMapLister {
 	private Map<String,List<TripleRelation>> classMapInventoryBridges = new HashMap<String,List<TripleRelation>>();
 	private Map<String,NodeMaker> classMapNodeMakers = new HashMap<String,NodeMaker>();
 
+	private ExecutionContext context = null;
+
 	public ClassMapLister(Mapping mapping) {
+		this(mapping, null);
+	}
+
+	public ClassMapLister(Mapping mapping, String apiKey) {
 		this.mapping = mapping;
+		setApiKey(apiKey);
 		groupTripleRelationsByClassMap();
+	}
+
+	public void setApiKey(String apiKey) {
+		Context ctx = new Context();
+		ctx.set(Symbol.create("apikey"), apiKey);
+		context = new ExecutionContext(ctx, null, null, null);
 	}
 
 	private void groupTripleRelationsByClassMap() {
@@ -108,7 +124,7 @@ public class ClassMapLister {
 		}
 		Model result = ModelFactory.createDefaultModel();
 		result.setNsPrefixes(mapping.getPrefixMapping());
-		FindQuery query = new FindQuery(Triple.ANY, inventoryBridges, limitPerClassMap, null);
+		FindQuery query = new FindQuery(Triple.ANY, inventoryBridges, limitPerClassMap, context);
 		result.getGraph().getBulkUpdateHandler().add(TripleQueryIter.create(query.iterator()));
 		return result;
 	}

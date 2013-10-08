@@ -61,6 +61,14 @@ public class Concatenation extends Expression {
 		return new Concatenation(renamedExpressions);
 	}
 
+	public Expression trimAccess(String apiKey, AliasMap aliases) {
+		List<Expression> trimmedExpressions = new ArrayList<Expression>(parts.size());
+		for (Expression expression: parts) {
+			trimmedExpressions.add(expression.trimAccess(apiKey, aliases));
+		}
+		return new Concatenation(trimmedExpressions);
+	}
+
 	public String toSQL(ConnectedDB database, AliasMap aliases) {
 		String[] fragments = new String[parts.size()];
 		for (int i = 0; i < parts.size(); i++) {

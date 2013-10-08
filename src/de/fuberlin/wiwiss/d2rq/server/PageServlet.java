@@ -48,10 +48,15 @@ public class PageServlet extends HttpServlet {
 				&& "/".equals(relativeResourceURI.substring(0, 1))) {
 			relativeResourceURI = relativeResourceURI.substring(1);
 		}
-		if (request.getQueryString() != null) {
+		/*if (request.getQueryString() != null) {
 			relativeResourceURI = relativeResourceURI + "?"
 					+ request.getQueryString();
-		}
+		}*/
+
+		String apiKey = null;
+		if (apiKey == null) apiKey = request.getHeader("Api-Key");
+		if (apiKey == null) apiKey = request.getHeader("X-Api-Key");
+		if (apiKey == null) apiKey = request.getParameter("apikey");
 
 		/* Determine service stem, i.e. vocab/ in /[vocab/]page */
 		int servicePos;
@@ -81,6 +86,7 @@ public class PageServlet extends HttpServlet {
 			ResourceDescriber describer = new ResourceDescriber(
 					server.getMapping(), resource.asNode(), outgoingTriplesOnly,
 					limit, Math.round(server.getConfig().getPageTimeout() * 1000));
+			describer.setApiKey(apiKey);
 			description = ModelFactory.createModelForGraph(describer.description());
 		} catch (QueryCancelledException ex) {
 			velocity.reportError(
@@ -281,9 +287,9 @@ public class PageServlet extends HttpServlet {
 	}
 
 	public static Statement getBestLabel(Resource resource) {
-		Statement label = resource.getProperty(RDFS.label);
+		Statement label = resource.getProperty(SKOS.prefLabel);
 		if (label == null)
-			label = resource.getProperty(SKOS.prefLabel);
+			label = resource.getProperty(RDFS.label);
 		if (label == null)
 			label = resource.getProperty(DC.title);
 		if (label == null)

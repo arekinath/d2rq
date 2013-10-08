@@ -1,9 +1,12 @@
 package de.fuberlin.wiwiss.d2rq.algebra;
 
 import java.util.Set;
+import java.util.Iterator;
 
 import de.fuberlin.wiwiss.d2rq.expr.Expression;
+import de.fuberlin.wiwiss.d2rq.D2RQException;
 import de.fuberlin.wiwiss.d2rq.expr.NotNull;
+import de.fuberlin.wiwiss.d2rq.algebra.Attribute;
 import de.fuberlin.wiwiss.d2rq.sql.ConnectedDB;
 
 public class ExpressionProjectionSpec implements ProjectionSpec {
@@ -46,6 +49,24 @@ public class ExpressionProjectionSpec implements ProjectionSpec {
 
 	public String toString() {
 		return "ProjectionSpec(" + expression + " AS " + name + ")";
+	}
+
+	public boolean hasAccess(String apiKey, AliasMap aliases) {
+		Set<Attribute> attrs = expression.attributes();
+		Iterator<Attribute> it = attrs.iterator();
+		while (it.hasNext()) {
+			Attribute at = it.next();
+			if (!at.hasAccess(apiKey, aliases)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public void checkAccess(String apiKey, AliasMap aliases) {
+		if (!hasAccess(apiKey, aliases)) {
+			throw new D2RQException("Access denied to column");
+		}
 	}
 
 	/**

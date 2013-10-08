@@ -35,6 +35,10 @@ public class NotNull extends Expression {
 		return NotNull.create(columnRenamer.applyTo(expr));
 	}
 
+	public Expression trimAccess(String apiKey, AliasMap aliases) {
+		return NotNull.create(expr.trimAccess(apiKey, aliases));
+	}
+
 	public String toSQL(ConnectedDB database, AliasMap aliases) {
 		return expr.toSQL(database, aliases) + " IS NOT NULL";
 	}

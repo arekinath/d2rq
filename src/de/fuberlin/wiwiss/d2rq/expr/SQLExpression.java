@@ -54,6 +54,10 @@ public class SQLExpression extends Expression {
 		return new SQLExpression(SQL.replaceColumnsInExpression(this.expression, columnRenamer));
 	}
 	
+	public Expression trimAccess(String apiKey, AliasMap aliases) {
+		return this;
+	}
+
 	public String toSQL(ConnectedDB database, AliasMap aliases) {
 		return "(" + SQL.quoteColumnsInExpression(this.expression, database) + ")";
 	}

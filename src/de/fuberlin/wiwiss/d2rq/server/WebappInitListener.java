@@ -29,7 +29,12 @@ public class WebappInitListener implements ServletContextListener {
 			log.info("Fresh ServletContext; initializing a new SystemLoader");
 			// We are running as pure webapp, without JettyLauncher,
 			// so initalize the loader from the configFile context parameter.
+			try {
 			loader = new SystemLoader();
+			} catch (Exception e) {
+				// do something?
+			}
+
 			D2RServer.storeSystemLoader(loader, context);
 			if (context.getInitParameter("configFile") == null) {
 				throw new RuntimeException("No configFile configured in web.xml");

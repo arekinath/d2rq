@@ -20,7 +20,13 @@ import de.fuberlin.wiwiss.d2rq.algebra.Relation;
 import de.fuberlin.wiwiss.d2rq.algebra.RelationName;
 import de.fuberlin.wiwiss.d2rq.expr.Conjunction;
 import de.fuberlin.wiwiss.d2rq.expr.Equality;
+import de.fuberlin.wiwiss.d2rq.expr.AttributeExpr;
 import de.fuberlin.wiwiss.d2rq.expr.Expression;
+import de.fuberlin.wiwiss.d2rq.expr.Constant;
+
+import com.hp.hpl.jena.sparql.engine.ExecutionContext;
+import com.hp.hpl.jena.sparql.util.Context;
+import com.hp.hpl.jena.sparql.util.Symbol;
 
 
 /**
@@ -34,6 +40,7 @@ public class SelectStatementBuilder {
 	private static final Log log = LogFactory.getLog(d2r_query.class);
 	
 	private ConnectedDB database;
+	private Context context;
 	private List<ProjectionSpec> selectSpecs = new ArrayList<ProjectionSpec>(10);
 	private List<Expression> conditions = new ArrayList<Expression>();
 	private Expression cachedCondition = null;
@@ -43,27 +50,64 @@ public class SelectStatementBuilder {
 	private List<OrderSpec> orderSpecs;
 	private int limit;
 	
-	public SelectStatementBuilder(Relation relation) {
+	public SelectStatementBuilder(Context ctx, Relation relation) {
+		if (ctx == null) {
+			context = new Context();
+		} else {
+			context = ctx;
+		}
+		buildStatement(relation);
+	}
+
+	public SelectStatementBuilder(ExecutionContext ctx, Relation relation) {
+		if (ctx == null) {
+			context = new Context();
+		} else {
+			context = ctx.getContext();
+		}
+		buildStatement(relation);
+	}
+
+	private void buildStatement(Relation relation) {
+		String apiKey = context.getAsString(Symbol.create("apikey"));
+
 		if (relation.isTrivial()) {
 			throw new IllegalArgumentException("Cannot create SQL for trivial relation");
 		}
 		if (relation.equals(Relation.EMPTY)) {
 			throw new IllegalArgumentException("Cannot create SQL for empty relation");
 		}
+
 		database = relation.database();
 		this.limit = Relation.combineLimits(relation.limit(), database.limit());
-		this.orderSpecs = relation.orderSpecs();
+		this.orderSpecs = new ArrayList<OrderSpec>();
+		for (OrderSpec spec: relation.orderSpecs()) {
+			Expression ex = spec.expression().trimAccess(apiKey, aliases);
+			if (!ex.equals(new Constant(null))) {
+				OrderSpec tspec = new OrderSpec(ex, spec.isAscending());
+				this.orderSpecs.add(tspec);
+			}
+		}
 		this.aliases = this.aliases.applyTo(relation.aliases());
 		for (Join join: relation.joinConditions()) {
 			for (Attribute attribute1: join.attributes1()) {
+				Expression ex1 = new AttributeExpr(attribute1);
+				if (!attribute1.hasAccess(apiKey, aliases))
+					ex1 = new Constant(null);
+
 				Attribute attribute2 = join.equalAttribute(attribute1);
-				addCondition(Equality.createAttributeEquality(attribute1, attribute2));
+				Expression ex2 = new AttributeExpr(attribute2);
+				if (!attribute2.hasAccess(apiKey, aliases))
+					ex2 = new Constant(null);
+				addCondition(Equality.create(ex1, ex2));
 			}
 		}
-		addCondition(relation.condition());
-		addCondition(relation.softCondition());
+		addCondition(relation.condition().trimAccess(apiKey, aliases));
+		addCondition(relation.softCondition().trimAccess(apiKey, aliases));
 		for (ProjectionSpec projection: relation.projections()) {
+			if (projection.hasAccess(apiKey, aliases)) {
 			addSelectSpec(projection);
+		}
 		}
 		eliminateDuplicates = !relation.isUnique();
 		addCondition(database.vendor().getRowNumLimitAsExpression(limit));
@@ -125,8 +169,10 @@ public class SelectStatementBuilder {
 		}
 		
 		
-		result.append(" FROM ");
 		Iterator<RelationName> tableIt = mentionedTables.iterator();
+		if (tableIt.hasNext()) {
+			result.append(" FROM ");
+		}
 		while (tableIt.hasNext()) {			
 			RelationName tableName = tableIt.next();
 			if (this.aliases.isAlias(tableName)) {
