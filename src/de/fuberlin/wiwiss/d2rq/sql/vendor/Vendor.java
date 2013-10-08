@@ -165,4 +165,7 @@ public interface Vendor {
 	 * @param connection
 	 */
 	void initializeConnection(Connection connection) throws SQLException;
+
+	boolean hasRegexExpressions();
+	String getRegexExpression(String sqlFragment, String regex, String flags);
 }

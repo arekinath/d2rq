@@ -63,4 +63,17 @@ public class PostgreSQL extends SQL92 {
 		// @see http://jdbc.postgresql.org/documentation/83/query.html
 		connection.setAutoCommit(false);
 	}
+
+	@Override
+	public boolean hasRegexExpressions() {
+		return true;
+	}
+
+	@Override
+	public String getRegexExpression(String sqlFragment, String regex, String flags) {
+		if (flags == null || flags.equals(""))
+			return "((" + sqlFragment + ") ~ " + quoteStringLiteral(regex) + ")";
+		else
+			return "((" + sqlFragment + ") ~ " + quoteStringLiteral("(?" + flags + ")" + regex) + ")";
+	}
 }

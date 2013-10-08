@@ -47,6 +47,7 @@ import com.hp.hpl.jena.sparql.expr.ExprFunctionN;
 import com.hp.hpl.jena.sparql.expr.ExprFunctionOp;
 import com.hp.hpl.jena.sparql.expr.ExprVar;
 import com.hp.hpl.jena.sparql.expr.ExprVisitor;
+import com.hp.hpl.jena.sparql.expr.ExprNode;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.expr.nodevalue.NodeFunctions;
 import com.hp.hpl.jena.sparql.expr.nodevalue.NodeValueBoolean;
@@ -70,6 +71,7 @@ import de.fuberlin.wiwiss.d2rq.expr.Negation;
 import de.fuberlin.wiwiss.d2rq.expr.SQLExpression;
 import de.fuberlin.wiwiss.d2rq.expr.Subtract;
 import de.fuberlin.wiwiss.d2rq.expr.UnaryMinus;
+import de.fuberlin.wiwiss.d2rq.expr.Regexp;
 import de.fuberlin.wiwiss.d2rq.nodes.DetermineNodeType;
 import de.fuberlin.wiwiss.d2rq.nodes.FixedNodeMaker;
 import de.fuberlin.wiwiss.d2rq.nodes.NodeMaker;
@@ -1130,11 +1132,44 @@ public final class TransformExprToSQLApplyer implements ExprVisitor {
 
 	protected boolean extensionSupports(ExprFunction function)
 	{
+		String name = function.getOpName();
+		if (name == null) name = function.getFunctionName(null);
+		if (name == null) name = function.getFunctionIRI();
+
+		if (name == "regex") {
+			if (!(function.getArg(1) instanceof ExprNode))
+				return false;
+			if (function.numArgs() == 3 &&
+					!(function.getArg(2) instanceof ExprNode))
+				return false;
+
+			return this.nodeRelation.baseRelation().database().vendor().hasRegexExpressions();
+		} else {
 		return false;
+	}
 	}
 	
 	protected void extensionConvert(ExprFunction function, List<Expression> args)
 	{
+		String name = function.getOpName();
+		if (name == null) name = function.getFunctionName(null);
+		if (name == null) name = function.getFunctionIRI();
+
+		if (name == "regex") {
+			String regex = null;
+			if (args.get(1) instanceof Constant) {
+				Constant arg1 = (Constant)args.get(1);
+				regex = arg1.value();
+			}
+			String options = null;
+			if (function.numArgs() == 3 && (args.get(2) instanceof Constant)) {
+				Constant arg2 = (Constant)args.get(2);
+				options = arg2.value();
+			}
+			expression.push(new Regexp(args.get(0), regex, options));
+		} else {
+			expression.push(Expression.FALSE);
+		}
 	}
 
 }

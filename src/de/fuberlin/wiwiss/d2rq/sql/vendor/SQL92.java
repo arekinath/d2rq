@@ -198,4 +198,7 @@ public class SQL92 implements Vendor {
 	public void initializeConnection(Connection connection) throws SQLException {
 		// Do nothing for standard SQL 92. Subclasses can override.
 	}
+
+	public boolean hasRegexExpressions() { return false; }
+	public String getRegexExpression(String sqlFragment, String regex, String flags) { return null; }
 }
