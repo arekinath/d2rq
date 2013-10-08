@@ -13,7 +13,11 @@ import de.fuberlin.wiwiss.d2rq.server.JettyLauncher;
  */
 public class server extends CommandLineTool {
 
-	public static void main(String[] args) {
+	public server() throws Exception {
+		super();
+	}
+
+	public static void main(String[] args) throws Exception {
 		new server().process(args);
 	}
 
@@ -26,7 +30,7 @@ public class server extends CommandLineTool {
 		printStandardArguments(true);
 		System.err.println();
 		System.err.println("  Server options:");
-		System.err.println("    --port number   Port where to start up the server (default: 2020)");
+		System.err.println("    --port port         Port where to start up the server (default: 2020)");
 		System.err.println("    -b baseURI      Server's base URI (default: " + SystemLoader.DEFAULT_BASE_URI + ")");
 		System.err.println("    --fast          Use all engine optimizations (recommended)");
 		System.err.println("    --verbose       Print debug information");

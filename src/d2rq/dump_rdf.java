@@ -36,7 +36,11 @@ public class dump_rdf extends CommandLineTool {
 	
 	private final static int DUMP_DEFAULT_FETCH_SIZE = 500;
 
-	public static void main(String[] args) {
+	public dump_rdf() throws Exception {
+		super();
+	}
+
+	public static void main(String[] args) throws Exception {
 		new dump_rdf().process(args);
 	}
 	

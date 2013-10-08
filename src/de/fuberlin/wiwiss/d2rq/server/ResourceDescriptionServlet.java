@@ -10,11 +10,17 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
+import com.hp.hpl.jena.query.QueryCancelledException;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.sparql.vocabulary.FOAF;
 import com.hp.hpl.jena.vocabulary.RDFS;
+
+import de.fuberlin.wiwiss.d2rq.ResourceDescriber;
 
 public class ResourceDescriptionServlet extends HttpServlet {
 
@@ -51,14 +57,20 @@ public class ResourceDescriptionServlet extends HttpServlet {
 
 		String pageURL = server.pageURL(serviceStem, relativeResourceURI);
 
-		String sparqlQuery = "DESCRIBE <" + resourceURI + ">";
-		QueryExecution qe = QueryExecutionFactory.create(sparqlQuery,
-				server.dataset());
-		if (server.getConfig().getPageTimeout() > 0) {
-			qe.setTimeout(Math.round(server.getConfig().getPageTimeout() * 1000));
+		Resource resource = ResourceFactory.createResource(resourceURI);
+		boolean outgoingTriplesOnly = server.isVocabularyResource(resource)
+				&& !server.getConfig().getVocabularyIncludeInstances();
+		int limit = server.getConfig().getLimitPerPropertyBridge();
+		Model description = null;
+		try {
+			ResourceDescriber describer = new ResourceDescriber(
+					server.getMapping(), resource.asNode(), outgoingTriplesOnly,
+					limit, Math.round(server.getConfig().getPageTimeout() * 1000));
+			description = ModelFactory.createModelForGraph(describer.description());
+		} catch (QueryCancelledException ex) {
+			response.sendError(504);
+			return;
 		}
-		Model description = qe.execDescribe();
-		qe.close();
 		
 		if (description.size() == 0) {
 			response.sendError(404);
@@ -67,7 +79,8 @@ public class ResourceDescriptionServlet extends HttpServlet {
 				&& description.getNsPrefixURI("foaf") == null) {
 			description.setNsPrefix("foaf", FOAF.NS);
 		}
-		Resource resource = description.getResource(resourceURI);
+
+		resource = description.getResource(resourceURI);
 
 		Resource document = description.getResource(documentURL);
 		document.addProperty(FOAF.primaryTopic, resource);

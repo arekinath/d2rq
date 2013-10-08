@@ -9,6 +9,15 @@ import de.fuberlin.wiwiss.d2rq.expr.Equality;
 import de.fuberlin.wiwiss.d2rq.expr.Expression;
 import de.fuberlin.wiwiss.d2rq.sql.ConnectedDB;
 
+import de.fuberlin.wiwiss.d2rq.SystemLoader;
+import de.fuberlin.wiwiss.d2rq.D2RQException;
+
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Literal;
+
 /**
  * A database column.
  * 
@@ -51,6 +60,35 @@ public class Attribute implements ProjectionSpec {
 		return database.vendor().quoteAttribute(this);
 	}
 	
+	public boolean hasAccess(String apiKey, AliasMap aliases) {
+		final String rname = aliases.originalOf(this.relationName).qualifiedName();
+		final String qname = rname + "." + this.attributeName;
+		final Model acl = SystemLoader.get().getAclModel();
+		if (acl != null) {
+			final Resource column = acl.createResource("d2rq://column/" + qname);
+			final Property allowed = acl.createProperty("d2rq://acl/", "allow");
+			if (apiKey == null)
+				apiKey = "*";
+			final Literal token = acl.createLiteral(apiKey, false);
+			final Statement st = acl.createStatement(column, allowed, token);
+			if (!acl.contains(st)) {
+				final Literal anytoken = acl.createLiteral("*", false);
+				final Statement anyst = acl.createStatement(column, allowed, anytoken);
+				if (!acl.contains(anyst)) {
+					System.out.println(st.toString());
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	public void checkAccess(String apiKey, AliasMap aliases) {
+		if (!hasAccess(apiKey, aliases)) {
+			throw new D2RQException("Access denied to column");
+		}
+	}
+
 	/**
 	 * Extracts the database column name from a tablename.columnname
 	 * combination.

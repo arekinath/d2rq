@@ -58,6 +58,8 @@ public class SystemLoader {
 	public static final String DEFAULT_BASE_URI = DEFAULT_PROTOCOL + "://" + DEFAULT_HOST + ":" + DEFAULT_PORT + "/";
 	public static final String DEFAULT_JDBC_URL = "jdbc:hsqldb:mem:temp";
 
+	private static SystemLoader instance = null;
+
 	private String username = null;
 	private String password = null;
 	private String jdbcDriverClass = null;
@@ -65,6 +67,7 @@ public class SystemLoader {
 	private boolean generateDirectMapping = false;
 	private String jdbcURL = null;
 	private String mappingFile = null;
+	private String aclFile = null;
 	private String baseURI = null;
 	private String resourceStem = "";
 	private Filter filter = null;
@@ -75,6 +78,7 @@ public class SystemLoader {
 	private ConnectedDB connectedDB = null;
 	private MappingGenerator generator = null;
 	private Model mapModel = null;
+	private Model aclModel = null;
 	private Mapping mapping = null;
 	private ModelD2RQ dataModel = null;
 	private GraphD2RQ dataGraph = null;
@@ -83,6 +87,17 @@ public class SystemLoader {
 	private D2RServer d2rServer = null;
 	private ClassMapLister classMapLister = null;
 	
+	public SystemLoader() throws Exception {
+		if (instance != null) {
+			throw new Exception("Duplicate systemloader");
+		}
+		instance = this;
+	}
+
+	public static SystemLoader get() {
+		return instance;
+	}
+
 	public void setUsername(String username) {
 		this.username = username;
 	}
@@ -108,6 +123,10 @@ public class SystemLoader {
 		this.generateDirectMapping = flag;
 	}
 	
+	public void setAclFile(String filename) {
+		this.aclFile = filename;
+	}
+
 	public void setJdbcURL(String jdbcURL) {
 		this.jdbcURL = jdbcURL;
 	}
@@ -318,6 +337,29 @@ public class SystemLoader {
 		return mapping;
 	}
 
+	public Model getAclModel() {
+		if (aclModel == null) {
+			if (aclFile != null) {
+				try {
+					aclModel = FileManager.get().loadModel(aclFile, getResourceBaseURI(), "TURTLE");
+				} catch (TurtleParseException ex) {
+					throw new D2RQException(
+							"Error parsing " + aclFile + ": " + ex.getMessage(), ex, 77);
+				} catch (JenaException ex) {
+					if (ex.getCause() != null && ex.getCause() instanceof RiotException) {
+						throw new D2RQException(
+								"Error parsing " + aclFile + ": " + ex.getCause().getMessage(), ex, 77);
+					}
+					throw ex;
+				} catch (AtlasException ex) {
+					throw new D2RQException(
+							"Error parsing " + aclFile + ": " + ex.getMessage(), ex, 77);
+				}
+			}
+		}
+		return aclModel;
+	}
+
 	public ModelD2RQ getModelD2RQ() {
 		if (dataModel == null) {
 			dataModel = new ModelD2RQ(getMapping());
@@ -371,6 +413,7 @@ public class SystemLoader {
 		mapModel = null;
 		mapping = null;
 		dataModel = null;
+		aclModel = null;
 		if (dataGraph != null) dataGraph.close();
 		dataGraph = null;
 		classMapLister = null;

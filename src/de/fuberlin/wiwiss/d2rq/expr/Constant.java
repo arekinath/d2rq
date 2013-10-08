@@ -45,7 +45,11 @@ public class Constant extends Expression {
 	}
 
 	public boolean isFalse() {
+		if (value == null) {
+			return true;
+		} else {
 		return false;
+	}
 	}
 
 	public boolean isTrue() {
@@ -59,10 +63,18 @@ public class Constant extends Expression {
 		return new Constant(value, columnRenamer.applyTo(attributeForTrackingType));
 	}
 
+	public Expression trimAccess(String apiKey, AliasMap aliases) {
+		return this;
+	}
+
 	public String toSQL(ConnectedDB database, AliasMap aliases) {
 		if (attributeForTrackingType == null) {
 			// TODO: This is an unsafe assumption
+			if (value == null) {
+				return "NULL";
+			} else {
 			return GenericType.CHARACTER.dataTypeFor(database.vendor()).toSQLLiteral(value);
+		}
 		}
 		return database.columnType(
 				aliases.originalOf(attributeForTrackingType)).toSQLLiteral(value);
@@ -78,6 +90,10 @@ public class Constant extends Expression {
 	public boolean equals(Object other) {
 		if (!(other instanceof Constant)) return false;
 		Constant otherConstant = (Constant) other;
+		if (value == null) {
+			if (otherConstant.value == null) return true;
+			return false;
+		}
 		if (!value.equals(otherConstant.value)) return false;
 		if (attributeForTrackingType == null) {
 			return otherConstant.attributeForTrackingType == null;
@@ -87,7 +103,11 @@ public class Constant extends Expression {
 	
 	public int hashCode() {
 		if (attributeForTrackingType == null) {
+			if (value == null) {
+				return 0;
+			} else {
 			return value.hashCode();
+		}
 		}
 		return value.hashCode() ^ attributeForTrackingType.hashCode();
 	}

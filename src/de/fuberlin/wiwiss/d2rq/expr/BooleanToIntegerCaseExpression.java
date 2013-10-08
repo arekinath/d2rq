@@ -40,6 +40,10 @@ public class BooleanToIntegerCaseExpression extends Expression {
 		return new BooleanToIntegerCaseExpression(base.renameAttributes(columnRenamer));
 	}
 
+	public Expression trimAccess(String apiKey, AliasMap aliases) {
+		return new BooleanToIntegerCaseExpression(base.trimAccess(apiKey, aliases));
+	}
+
 	public String toSQL(ConnectedDB database, AliasMap aliases) {
 		return "(CASE WHEN (" + base.toSQL(database, aliases) + ") THEN 1 ELSE 0 END)";
 	}

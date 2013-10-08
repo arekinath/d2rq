@@ -15,6 +15,7 @@ import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.sparql.resultset.ResultsFormat;
 import com.hp.hpl.jena.sparql.util.QueryExecUtils;
+import com.hp.hpl.jena.sparql.util.Symbol;
 
 import de.fuberlin.wiwiss.d2rq.CommandLineTool;
 import de.fuberlin.wiwiss.d2rq.D2RQException;
@@ -31,7 +32,11 @@ import de.fuberlin.wiwiss.d2rq.jena.ModelD2RQ;
 public class d2r_query extends CommandLineTool {
 	private static final Log log = LogFactory.getLog(d2r_query.class);
 	
-	public static void main(String[] args) {
+	public d2r_query() throws Exception {
+		super();
+	}
+
+	public static void main(String[] args) throws Exception {
 		new d2r_query().process(args);
 	}
 	
@@ -48,6 +53,7 @@ public class d2r_query extends CommandLineTool {
 		System.err.println("    -b baseURI      Base URI for RDF output (default: " + SystemLoader.DEFAULT_BASE_URI + ")");
 		System.err.println("    -f format       One of text (default), xml, json, csv, tsv, srb, ttl");
 		System.err.println("    -t timeout      Query timeout in seconds");
+		System.err.println("    -k apikey		Apikey to use for ACL checking");
 		System.err.println("    --verbose       Print debug information");
 		System.err.println();
 		System.err.println("  Database connection options (only with jdbcURL):");
@@ -59,17 +65,20 @@ public class d2r_query extends CommandLineTool {
 	private ArgDecl baseArg = new ArgDecl(true, "b", "base");
 	private ArgDecl formatArg = new ArgDecl(true, "f", "format");
 	private ArgDecl timeoutArg = new ArgDecl(true, "t", "timeout");
+	private ArgDecl apiKeyArg = new ArgDecl(true, "k", "apikey");
 
 	public void initArgs(CommandLine cmd) {
 		cmd.add(baseArg);
 		cmd.add(formatArg);
 		cmd.add(timeoutArg);
+		cmd.add(apiKeyArg);
 		setMinMaxArguments(1, 2);
 		setSupportImplicitJdbcURL(true);
 	}
 	
 	public void run(CommandLine cmd, SystemLoader loader) throws IOException {
 		String query = null;
+		String apiKey = "*";
 		if (cmd.numItems() == 1) {
 			query = cmd.getItem(0, true);
 		} else if (cmd.numItems() == 2) {
@@ -83,6 +92,9 @@ public class d2r_query extends CommandLineTool {
 		}
 		if (cmd.hasArg(baseArg)) {
 			loader.setSystemBaseURI(cmd.getArg(baseArg).getValue());
+		}
+		if (cmd.hasArg(apiKeyArg)) {
+			apiKey = cmd.getArg(apiKeyArg).getValue();
 		}
 		double timeout = -1;
 		if (cmd.hasArg(timeoutArg)) {
@@ -108,6 +120,7 @@ public class d2r_query extends CommandLineTool {
 			QueryEngineD2RQ.register();
 			Query q = QueryFactory.create(query, loader.getResourceBaseURI());
 			QueryExecution qe = QueryExecutionFactory.create(q, d2rqModel);
+			qe.getContext().set(Symbol.create("apikey"), apiKey);
 			if (timeout > 0) {
 				qe.setTimeout(Math.round(timeout * 1000));
 			}

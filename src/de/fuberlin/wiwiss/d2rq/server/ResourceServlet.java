@@ -34,6 +34,11 @@ public class ResourceServlet extends HttpServlet {
 			relativeResourceURI = relativeResourceURI + "?" + request.getQueryString();
 		}
 		
+		String apiKey = null;
+		if (apiKey == null) apiKey = request.getHeader("Api-Key");
+		if (apiKey == null) apiKey = request.getHeader("X-Api-Key");
+		if (apiKey == null) apiKey = request.getParameter("apikey");
+
 		/* Determine service stem, i.e. vocab/ in /[vocab/]resource */
 		int servicePos;
 		if (-1 == (servicePos = request.getServletPath().indexOf("/" + D2RServer.getResourceServiceName())))
@@ -41,7 +46,7 @@ public class ResourceServlet extends HttpServlet {
 		String serviceStem = request.getServletPath().substring(1, servicePos + 1);
 
 		String resourceURI = server.resourceBaseURI(serviceStem) + relativeResourceURI;
-		if (handleDownload(resourceURI, response, server)) {
+		if (handleDownload(resourceURI, response, server, apiKey)) {
 			return;
 		}
 
@@ -71,11 +76,11 @@ public class ResourceServlet extends HttpServlet {
 				"303 See Other: For a description of this item, see " + location);
 	}
 
-	private boolean handleDownload(String resourceURI, HttpServletResponse response, D2RServer server) throws IOException {
+	private boolean handleDownload(String resourceURI, HttpServletResponse response, D2RServer server, String apiKey) throws IOException {
 		Mapping m = D2RServer.retrieveSystemLoader(getServletContext()).getMapping();
 		for (Resource r: m.downloadMapResources()) {
 			DownloadMap d = m.downloadMap(r);
-			DownloadContentQuery q = new DownloadContentQuery(d, resourceURI);
+			DownloadContentQuery q = new DownloadContentQuery(d, resourceURI, apiKey);
 			if (q.hasContent()) {
 				response.setContentType(q.getMediaType() != null ? q.getMediaType() : "application/octet-stream");
 				InputStream is = q.getContentStream();

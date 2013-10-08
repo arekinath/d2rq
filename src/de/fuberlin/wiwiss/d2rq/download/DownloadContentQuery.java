@@ -14,6 +14,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.sparql.util.Context;
+import com.hp.hpl.jena.sparql.util.Symbol;
 
 import de.fuberlin.wiwiss.d2rq.D2RQException;
 import de.fuberlin.wiwiss.d2rq.algebra.MutableRelation;
@@ -49,15 +51,17 @@ public class DownloadContentQuery {
 	private ResultSet resultSet = null;
 	private InputStream resultStream = null;
 	private String mediaType = null;
+	private String apiKey = null;
 	
 	/**
 	 * @param downloadMap The download map to be queried
 	 * @param uri The URI whose content is desired
 	 */
-	public DownloadContentQuery(DownloadMap downloadMap, String uri) {
+	public DownloadContentQuery(DownloadMap downloadMap, String uri, String apiKey) {
 		this.downloadMap = downloadMap;
 		this.mediaTypeValueMaker = downloadMap.getMediaTypeValueMaker();
 		this.uri = uri;
+		this.apiKey = apiKey;
 		execute();
 	}
 	
@@ -99,7 +103,11 @@ public class DownloadContentQuery {
 		newRelation.project(requiredProjections);
 		newRelation.limit(1);
 		Relation filteredRelation = newRelation.immutableSnapshot();
-		SelectStatementBuilder builder = new SelectStatementBuilder(filteredRelation);
+
+		Context c = new Context();
+		c.set(Symbol.create("apikey"), apiKey);
+
+		SelectStatementBuilder builder = new SelectStatementBuilder(c, filteredRelation);
 		String sql = builder.getSQLStatement();
 		int contentColumn = builder.getColumnSpecs().indexOf(downloadMap.getContentDownloadColumn()) + 1;
     	ConnectedDB db = filteredRelation.database();

@@ -22,6 +22,7 @@ public abstract class Expression {
 		public boolean isFalse() { return false; }
 		public boolean isTrue() { return true; }
 		public Expression renameAttributes(ColumnRenamer columnRenamer) { return this; }
+		public Expression trimAccess(String apiKey, AliasMap aliases) { return this; }
 		public String toSQL(ConnectedDB database, AliasMap aliases) { return "1"; }
 		public String toString() { return "TRUE"; }
 	};
@@ -30,6 +31,7 @@ public abstract class Expression {
 		public boolean isFalse() { return true; }
 		public boolean isTrue() { return false; }
 		public Expression renameAttributes(ColumnRenamer columnRenamer) { return this; }
+		public Expression trimAccess(String apiKey, AliasMap aliases) { return this; }
 		public String toSQL(ConnectedDB database, AliasMap aliases) { return "0"; }
 		public String toString() { return "FALSE"; }
 	};
@@ -42,6 +44,8 @@ public abstract class Expression {
 	
 	public abstract Expression renameAttributes(ColumnRenamer columnRenamer);
 	
+	public abstract Expression trimAccess(String apiKey, AliasMap aliases);
+
 	public abstract String toSQL(ConnectedDB database, AliasMap aliases);
 
 	public Expression and(Expression other) {

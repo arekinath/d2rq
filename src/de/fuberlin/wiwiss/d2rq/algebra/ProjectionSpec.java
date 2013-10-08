@@ -21,5 +21,9 @@ public interface ProjectionSpec extends Comparable<ProjectionSpec> {
 	
 	public String toSQL(ConnectedDB database, AliasMap aliases);
 	
+	public boolean hasAccess(String apiKey, AliasMap aliases);
+
+	public void checkAccess(String apiKey, AliasMap aliases);
+
 	public Expression notNullExpression(ConnectedDB database, AliasMap aliases);
 }

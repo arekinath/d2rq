@@ -31,6 +31,14 @@ public class AttributeExpr extends Expression {
 		return new AttributeExpr(columnRenamer.applyTo(attribute));
 	}
 
+	public Expression trimAccess(String apiKey, AliasMap aliases) {
+		if (attribute.hasAccess(apiKey, aliases)) {
+			return this;
+		} else {
+			return new Constant(null);
+		}
+	}
+
 	public String toSQL(ConnectedDB database, AliasMap aliases) {
 		return database.vendor().quoteAttribute(attribute);
 	}

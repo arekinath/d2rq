@@ -25,7 +25,11 @@ import de.fuberlin.wiwiss.d2rq.mapgen.MappingGenerator;
 public class generate_mapping extends CommandLineTool {
 	private final static Log log = LogFactory.getLog(generate_mapping.class);
 	
-	public static void main(String[] args) {
+	public generate_mapping() throws Exception {
+		super();
+	}
+
+	public static void main(String[] args) throws Exception {
 		new generate_mapping().process(args);
 	}
 	

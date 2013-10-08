@@ -35,6 +35,10 @@ public class UnaryMinus extends Expression {
 		return new UnaryMinus(base.renameAttributes(columnRenamer));
 	}
 
+	public Expression trimAccess(String apiKey, AliasMap aliases) {
+		return new UnaryMinus(base.trimAccess(apiKey, aliases));
+	}
+
 	public String toSQL(ConnectedDB database, AliasMap aliases) {
 		return "- (" + base.toSQL(database, aliases) + ")";
 	}

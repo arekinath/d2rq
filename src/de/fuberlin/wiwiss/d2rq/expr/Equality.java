@@ -67,6 +67,10 @@ public class Equality extends Expression {
 				expr2.renameAttributes(columnRenamer));
 	}
 
+	public Expression trimAccess(String apiKey, AliasMap aliases) {
+		return new Equality(expr1.trimAccess(apiKey, aliases), expr2.trimAccess(apiKey, aliases));
+	}
+
 	public String toSQL(ConnectedDB database, AliasMap aliases) {
 		return expr1.toSQL(database, aliases) + " = " + expr2.toSQL(database, aliases);
 	}
