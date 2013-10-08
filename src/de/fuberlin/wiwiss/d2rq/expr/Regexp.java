@@ -38,6 +38,10 @@ public class Regexp extends Expression {
 		return new Regexp(target.renameAttributes(columnRenamer), regexp, options);
 	}
 
+	public Expression trimAccess(String apiKey, AliasMap aliases) {
+		return new Regexp(target.trimAccess(apiKey, aliases), regexp, options);
+	}
+
 	public String toSQL(ConnectedDB database, AliasMap aliases) {
 		String fragment = target.toSQL(database, aliases);
 		return database.vendor().getRegexExpression(fragment, regexp, options);
