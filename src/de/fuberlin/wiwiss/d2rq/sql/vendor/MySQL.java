@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import de.fuberlin.wiwiss.d2rq.sql.Quoter;
 import de.fuberlin.wiwiss.d2rq.sql.Quoter.PatternDoublingQuoter;
+import de.fuberlin.wiwiss.d2rq.sql.RegexLikeCompiler;
 import de.fuberlin.wiwiss.d2rq.sql.types.DataType;
 import de.fuberlin.wiwiss.d2rq.sql.types.SQLBit;
 import de.fuberlin.wiwiss.d2rq.sql.types.SQLBoolean;
@@ -170,6 +171,29 @@ public class MySQL extends SQL92 {
 			} catch (SQLException ex) {
 				return null;
 			}
+		}
+	}
+
+	@Override
+	public boolean hasRegexExpressions() {
+		return true;
+	}
+
+	@Override
+	public String getRegexExpression(String sqlFragment, String regex, String flags) {
+		if (flags == null || flags.equals("")) {
+			RegexLikeCompiler rlc = new RegexLikeCompiler(regex);
+			String like = rlc.compile();
+			if (like == null) {
+				return sqlFragment + " REGEXP BINARY " + quoteStringLiteral(regex);
+			} else {
+				return sqlFragment + " LIKE " + quoteStringLiteral(like);
+			}
+		} else if (flags.equals("i")) {
+			return sqlFragment + " REGEXP " + quoteStringLiteral(regex);
+		} else {
+			System.out.println("WARNING: MySQL ignoring regex flags: regex(" + regex + ", " + flags + ")");
+			return sqlFragment + " REGEXP BINARY " + quoteStringLiteral(regex);
 		}
 	}
 }

@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 
 import de.fuberlin.wiwiss.d2rq.sql.SQL;
+import de.fuberlin.wiwiss.d2rq.sql.RegexLikeCompiler;
 import de.fuberlin.wiwiss.d2rq.sql.types.DataType;
 import de.fuberlin.wiwiss.d2rq.sql.types.SQLBoolean;
 import de.fuberlin.wiwiss.d2rq.sql.types.SQLCharacterString;
@@ -71,9 +72,18 @@ public class PostgreSQL extends SQL92 {
 
 	@Override
 	public String getRegexExpression(String sqlFragment, String regex, String flags) {
-		if (flags == null || flags.equals(""))
-			return "((" + sqlFragment + ") ~ " + quoteStringLiteral(regex) + ")";
-		else
-			return "((" + sqlFragment + ") ~ " + quoteStringLiteral("(?" + flags + ")" + regex) + ")";
+		RegexLikeCompiler rlc = new RegexLikeCompiler(regex);
+		String like = rlc.compile();
+		if (flags == null || flags.equals("")) {
+			if (like == null) {
+				return sqlFragment + " ~ " + quoteStringLiteral(regex);
+			} else {
+				return sqlFragment + " LIKE " + quoteStringLiteral(like);
+			}
+		} else if (flags.equals("i") && (like != null)) {
+			return sqlFragment + " ILIKE " + quoteStringLiteral(like);
+		} else {
+			return sqlFragment + " ~ " + quoteStringLiteral("(?" + flags + ")" + regex);
+		}
 	}
 }
