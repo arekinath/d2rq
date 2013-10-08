@@ -109,6 +109,7 @@ public class DownloadContentQuery {
 			log.debug(sql);
 			resultSet = statement.executeQuery(sql);
 			if (!resultSet.next()) {
+				conn.commit();
 				close();
 				return;	// 0 results
 			}
