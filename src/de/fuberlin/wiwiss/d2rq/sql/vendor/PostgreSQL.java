@@ -63,6 +63,8 @@ public class PostgreSQL extends SQL92 {
 		// Disable auto-commit in PostgreSQL to support cursors
 		// @see http://jdbc.postgresql.org/documentation/83/query.html
 		connection.setAutoCommit(false);
+               // Doing setAutoCommit actually opens a transaction -- close it now
+               connection.commit();
 	}
 
 	@Override

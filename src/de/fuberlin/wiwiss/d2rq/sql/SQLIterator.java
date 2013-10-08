@@ -121,6 +121,12 @@ public class SQLIterator implements ClosableIterator<ResultRow> {
 				throw new D2RQException(ex.getMessage() + "; query was: " + this.sql);
 			}
 	    }
+
+	    try {
+	    	this.database.connection().commit();
+	    } catch (SQLException ex) {
+	    	throw new D2RQException(ex.getMessage() + "; query was: " + this.sql);
+	    }
 	}
 
 	public synchronized void cancel() {
@@ -128,6 +134,7 @@ public class SQLIterator implements ClosableIterator<ResultRow> {
 		if (statement != null) {
 			try {
 				statement.cancel();
+				this.database.connection().rollback();
 			} catch (SQLException ex) {
 				throw new RuntimeException(ex);
 			}
