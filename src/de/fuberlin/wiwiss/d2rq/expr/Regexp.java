@@ -16,9 +16,18 @@ public class Regexp extends Expression {
 	private final String regexp;
 	private final String options;
 
+	public class InvalidRegexpException extends Error
+	{
+		public InvalidRegexpException() {
+			super("Invalid regular expression");
+		}
+	}
+
 	public Regexp(Expression target, String regexp, String options) {
 		this.target = target;
 		this.regexp = regexp;
+		if (regexp == null)
+			throw new InvalidRegexpException();
 		this.options = options;
 	}
 
@@ -48,11 +57,19 @@ public class Regexp extends Expression {
 	}
 
 	public boolean equals(Object other) {
+		if (other == null) return false;
 		if (!(other instanceof Regexp)) return false;
 		Regexp othrx = (Regexp)other;
-		return target.equals(othrx.target) &&
-			regexp.equals(othrx.regexp) &&
-			(options == null) ? (othrx.options == null) : options.equals(othrx.options);
+
+		if (target == null && othrx.target != null) return false;
+		if (target != null && !target.equals(othrx.target)) return false;
+
+		if (options == null && othrx.options != null) return false;
+		if (options != null && !options.equals(othrx.options)) return false;
+
+		if (!regexp.equals(othrx.regexp)) return false;
+
+		return true;
 	}
 
 	public int hashCode() {
