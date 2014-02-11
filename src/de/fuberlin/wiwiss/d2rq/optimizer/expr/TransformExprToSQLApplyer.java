@@ -1136,7 +1136,7 @@ public final class TransformExprToSQLApplyer implements ExprVisitor {
 		if (name == null) name = function.getFunctionName(null);
 		if (name == null) name = function.getFunctionIRI();
 
-		if (name == "regex") {
+		if (name.equals("regex")) {
 			if (!(function.getArg(1) instanceof ExprNode))
 				return false;
 			if (function.numArgs() == 3 &&
@@ -1155,7 +1155,7 @@ public final class TransformExprToSQLApplyer implements ExprVisitor {
 		if (name == null) name = function.getFunctionName(null);
 		if (name == null) name = function.getFunctionIRI();
 
-		if (name == "regex") {
+		if (name.equals("regex")) {
 			String regex = null;
 			if (args.get(1) instanceof Constant) {
 				Constant arg1 = (Constant)args.get(1);
@@ -1166,9 +1166,13 @@ public final class TransformExprToSQLApplyer implements ExprVisitor {
 				Constant arg2 = (Constant)args.get(2);
 				options = arg2.value();
 			}
+			if (args.get(0) == null || regex == null) {
+				conversionFailed(function);
+				return;
+			}
 			expression.push(new Regexp(args.get(0), regex, options));
 		} else {
-			expression.push(Expression.FALSE);
+			conversionFailed(function);
 		}
 	}
 
